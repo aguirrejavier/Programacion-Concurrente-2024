@@ -38,7 +38,7 @@ public class Parte3
         }
         public synchronized void stopThread() 
         {
-            running = false;
+            this.running = false;
         }
     
         public String getNameSide() 
