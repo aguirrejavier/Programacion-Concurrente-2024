@@ -81,8 +81,8 @@ public class Parte3
                 Mesagges.welcome();                 
                 while(running)
                 {
-                    int option = this.state.menuBack(scanner);
-                    if(!this.state.processOption(option,otherSide))
+                    this.state.menuBack(scanner,otherSide);
+                    if(!this.state.validate())
                     {
                         running = false;
                         otherSide.stopThread();
@@ -157,8 +157,7 @@ public class Parte3
                     this.state.farmer_in_site = !this.state.farmer_in_site;
                     if (this.state.checkWin())
                     {
-                        System.out.println("Todos se encuentran en lado B");
-                        System.out.println("Fin del programa");
+                        Mesagges.winRiddle();
                         running = false;
                         otherSide.stopThread();
                         synchronized (otherSide)
@@ -167,8 +166,8 @@ public class Parte3
                         }
                         break;
                     }
-                    int option = state.menuBack(scanner);
-                    if(!this.state.processOption(option,otherSide))
+                    state.menuBack(scanner,otherSide);
+                    if(!this.state.validate())
                     {
                         running = false;
                         otherSide.stopThread();
@@ -272,17 +271,67 @@ public class Parte3
             }
             return true;
         }
-        public int menuBack(Scanner scanner)
+        public void menuBack(Scanner scanner,SideThread otherSide)
         {
-            System.out.println("======================== MENÚ LADO "+ site +" ========================");
-            System.out.println("Por favor, ingrese cómo desea que el granjero viaje:");
-            System.out.println(this.farmer_in_site ? "0. Granjero solo" : "");
-            System.out.println(this.fox_in_site ? "1. Zorro" : "");
-            System.out.println(this.chicken_in_site ? "2. Chicken" : "");
-            System.out.println(this.maiz_in_site ? "3. Maiz" : "");
-            System.out.print("¿Cruzar con?: ");
-            int option = scanner.nextInt();
-            return option;
+            while (true) 
+            {
+                System.out.println("======================== MENÚ LADO "+ site +" ========================");
+                System.out.println("Por favor, ingrese cómo desea que el granjero viaje:");
+                System.out.println(this.farmer_in_site ? "0. Granjero solo" : "");
+                System.out.println(this.fox_in_site ? "1. Zorro" : "");
+                System.out.println(this.chicken_in_site ? "2. Chicken" : "");
+                System.out.println(this.maiz_in_site ? "3. Maiz" : "");
+                System.out.print("¿Cruzar con?: ");
+                int option = scanner.nextInt();
+                if(processOption(option,otherSide) == true)
+                    break;
+            }
+        }
+
+        public synchronized boolean processOption(int option, SideThread otherSide) 
+        {
+            switch (option) 
+            {
+                case OPTION_FARMER:
+                    cross(FARMER, otherSide.getNameSide());
+                    break;
+                case OPTION_FOX:
+                    if (this.fox_in_site) 
+                    {
+                        cross(FOX, otherSide.getNameSide());
+                        otherSide.setLastObject(FOX);
+                    } else {
+                        Mesagges.messageOtherSide(FOX);
+                        return false;
+                    }
+                    break;
+                case OPTION_CHICKEN:
+                    if (this.chicken_in_site) 
+                    {
+                        cross(CHICKEN, otherSide.getNameSide());
+                        otherSide.setLastObject(CHICKEN);
+                    } else 
+                    {
+                        Mesagges.messageOtherSide(CHICKEN);
+                        return false;
+                    }
+                    break;
+                case OPTION_MAIZ:
+                    if (this.maiz_in_site) 
+                    {
+                        cross(MAIZ, otherSide.getNameSide());
+                        otherSide.setLastObject(MAIZ);
+                    } else 
+                    {
+                        Mesagges.messageOtherSide(MAIZ);
+                        return false;
+                    }
+                    break;
+                default:
+                    Mesagges.messageError();
+                    return false;
+            }
+            return true;
         }
         public void refresh_states(String option)
         {
@@ -307,48 +356,6 @@ public class Parte3
                 }
             }
             
-        }
-        public synchronized boolean processOption(int option, SideThread otherSide) 
-        {
-            switch (option) 
-            {
-                case OPTION_FARMER:
-                    cross(FARMER, otherSide.getNameSide());
-                    break;
-                case OPTION_FOX:
-                    if (this.fox_in_site) 
-                    {
-                        cross(FOX, otherSide.getNameSide());
-                        otherSide.setLastObject(FOX);
-                    } else {
-                        Mesagges.messageOtherSide(FOX);
-                    }
-                    break;
-                case OPTION_CHICKEN:
-                    if (this.chicken_in_site) 
-                    {
-                        cross(CHICKEN, otherSide.getNameSide());
-                        otherSide.setLastObject(CHICKEN);
-                    } else 
-                    {
-                        Mesagges.messageOtherSide(CHICKEN);
-                    }
-                    break;
-                case OPTION_MAIZ:
-                    if (this.maiz_in_site) 
-                    {
-                        cross(MAIZ, otherSide.getNameSide());
-                        otherSide.setLastObject(MAIZ);
-                    } else 
-                    {
-                        Mesagges.messageOtherSide(MAIZ);
-                    }
-                    break;
-                default:
-                    Mesagges.messageError();
-                    return false;
-            }
-            return validate();
         }
 
     }
@@ -394,6 +401,11 @@ public class Parte3
         public static void errorScanner() 
         {
             System.out.println("Se ha producido un error al leer la entrada. Inténtalo de nuevo.");
+        }
+        public static void winRiddle()
+        {
+            System.out.println("Todos se encuentran en lado B");
+            System.out.println("Fin del programa");
         }
     }
 }
