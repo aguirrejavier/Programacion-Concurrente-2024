@@ -94,15 +94,18 @@ public class Parte3
                     }
                     synchronized (otherSide) 
                     {
-                        Mesagges.crossChange(name,otherSide.name);
                         otherSide.notify();
                     }
                     wait();
+                    if(!running)
+                        break;
                     if(this.getLastObject() != null)
                         this.state.refresh_states(this.getLastObject());
-                    
+                    else
+                        Mesagges.farmerAlone(this.state.site);
+
                     this.state.farmer_in_site = !this.state.farmer_in_site;
-                    Thread.sleep(2000);
+                    this.setLastObject(null);
                 }
             
             }catch (InterruptedException e) 
@@ -145,17 +148,32 @@ public class Parte3
                     String last = this.getLastObject();
                     if(last != null && !last.isEmpty())
                     {
-                        Mesagges.farmerAlone(this.name);
                         this.state.refresh_states(last);
                     }
+                    else
+                    {
+                        Mesagges.farmerAlone(this.name);
+                    }
                     this.state.farmer_in_site = !this.state.farmer_in_site;
-                    this.setLastObject(null);
+                    if (this.state.checkWin())
+                    {
+                        System.out.println("Todos se encuentran en lado B");
+                        System.out.println("Fin del programa");
+                        running = false;
+                        otherSide.stopThread();
+                        synchronized (otherSide)
+                        {
+                            otherSide.notify();
+                        }
+                        break;
+                    }
                     int option = state.menuBack(scanner);
                     if(!this.state.processOption(option,otherSide))
                     {
                         running = false;
                         otherSide.stopThread();
                     }
+                    this.setLastObject(null);
                     synchronized (otherSide) {
                         Mesagges.crossChange(name,otherSide.name);
                         otherSide.notify();
@@ -216,24 +234,27 @@ public class Parte3
             this.farmer_in_site = farmer_in_site;
         }
 
-
+        public synchronized boolean checkWin()
+        {
+            if(this.chicken_in_site && this.fox_in_site && this.maiz_in_site && this.farmer_in_site)
+            {
+                return true;
+            }
+            return false;
+        }
         public synchronized void cross(String objeto, String otherSideString) 
         {
             switch (objeto) {
                 case FARMER:
-                    Mesagges.messageCross(null, otherSideString);
                     break;
                 case FOX:
                     this.fox_in_site = !this.fox_in_site;
-                    Mesagges.messageCross(objeto, otherSideString);
                     break;
                 case CHICKEN:
                     this.chicken_in_site = !this.chicken_in_site;
-                    Mesagges.messageCross(objeto, otherSideString);
                     break;
                 case MAIZ:
                     this.maiz_in_site = !this.maiz_in_site;
-                    Mesagges.messageCross(objeto, otherSideString);
                     break;
             }
             this.farmer_in_site = !this.farmer_in_site;
@@ -242,11 +263,11 @@ public class Parte3
         {
             if (this.fox_in_site && this.chicken_in_site && !this.farmer_in_site) 
             {
-                Mesagges.messageValidate(FOX,this.site);
+                Mesagges.messageValidate(FOX, CHICKEN,this.site);
                 return false;
             } else if (this.chicken_in_site && this.maiz_in_site && !this.farmer_in_site) 
             {
-                Mesagges.messageValidate(CHICKEN,this.site);
+                Mesagges.messageValidate(CHICKEN, MAIZ, this.site);
                 return false;
             }
             return true;
@@ -271,12 +292,15 @@ public class Parte3
                 {
                     case FOX:
                         this.fox_in_site = !this.fox_in_site;
+                        Mesagges.messageCross(FOX, site);
                         break;
                     case CHICKEN:
                         this.chicken_in_site = !this.chicken_in_site;
+                        Mesagges.messageCross(CHICKEN, site);
                         break;
                     case MAIZ:
                         this.maiz_in_site = !this.maiz_in_site;
+                        Mesagges.messageCross(MAIZ, site);
                         break;
                     default:
                         break;
@@ -346,9 +370,9 @@ public class Parte3
         {
             System.out.println("El " + object +" ya está del otro lado.");
         }
-        public static void messageValidate(String object, String side) 
+        public static void messageValidate(String object, String otherObject, String side) 
         {
-            System.out.println("¡La "+ object +" se comió el maiz! En el "+side);
+            System.out.println("¡La "+ object +" se comió el "+ otherObject +"! En el "+side);
             System.out.println("Fin del programa");
         }
         public static void messageCross(String object, String side) 
@@ -364,7 +388,7 @@ public class Parte3
         }
         public static void farmerAlone(String side) 
         {
-            System.out.println("El granjero llego a " + side + "solo." );
+            System.out.println("El granjero llego a " + side + " solo." );
         }
         
         public static void errorScanner() 
